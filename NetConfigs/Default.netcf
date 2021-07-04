@@ -1,0 +1,39 @@
+add_layer convolutional relu 8 4 4 2 
+set_max_change 0.1
+
+reset
+add_layer pooling relu 2 2 2
+
+reset
+add_layer convolutional relu 8 3 3 1 
+set_max_change 0.1
+
+reset
+add_layer fully_connected logistic 56
+
+reset
+load_train_data K:\\Blobs\\BlobTrain.blob K:\\TranslationUnits\\CharTranslation.trun
+resize 22 1
+transform sin
+
+reset
+load_test_data K:\\Blobs\\BlobTrain.blob K:\\TranslationUnits\\CharTranslation.trun
+resize 22 1
+transform sin
+
+reset
+set_loss binary
+#sets loss function for the net
+
+connect
+
+seed_weights 0.2
+
+print
+
+
+
+
+
+
+

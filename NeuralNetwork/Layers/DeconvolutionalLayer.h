@@ -1,0 +1,14 @@
+#ifndef DECONVOLUTIONALLAYER_H
+#define DECONVOLUTIONALLAYER_H
+
+namespace NN {
+
+
+
+
+
+}
+
+
+
+#endif // DECONVOLUTIONALLAYER_H

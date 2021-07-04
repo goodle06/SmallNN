@@ -1,0 +1,41 @@
+add_layer [type:fully_connected, convolutional,pooling] [activation function type:relu, logistic, etc.] [parameters delimited with spaces] 
+set_max_change [max weight change:float - optional parameter, usually 0.1 is sufficiant to tame exploding gradient]
+# layer parameters depend on layer type:
+# fully_connected: [number of neurons]
+# convolutional: [number of filters, filter height, filter width, filter stride, input padding]
+# pooling: [filter height, filter width, filter stride]
+# pooling layer doesn't apply any nonlinearity, but activation function still passed to it for uniformity. Max weight change also not aplicable since all weights are constant.
+
+# WARNING: AFTER CREATING NEW OBJECT WITHIN NET (for example layer or blob) FUTHER COMMAND MANAGEMENT IS PERFORMED BY THAT PARTICULAR OBJECT. TO RETURN OWNERSHIP OF THE COMMAND EXECUTION TO THE NET YOU NEED TO CALL [reset], please see default example.
+
+load_[train|test]_data [filename with path, optional] [translation filename path]
+resize [target size for samples:int, padding policy:bool, aspect ratio policy:bool, random padding:bool]
+transform [transformation] 
+# loads datablobs
+# loading data for training and testing are separate function calls. Be sure to duplicate command exactly for both of them except filenames and target (test or train)
+# when no filename is provided opens openfilename dialog (Windows only)
+# transofrmation of input data, available transformations are: sin, cos, shift, division, multiplication, arcsin, arccos. Default transformation is sin.
+# target size is neural network input size, for example 22 is saying input size of data sample will be 22x22 pixels
+# padding policy when set true just pads original sample if it's less then target size, else downsizing with preserving aspect ration is performed
+# aspect ratio policy when set true saves aspect ratio of original sample and pads rest of the sample, default value is FALSE, which doesn't matter when padding is enabled
+# random padding when set true performs random shift of original sample within target size so it isn't centered in final sample, default value is FALSE
+
+set_loss [binary||softmax]
+#sets loss function for the net
+
+connect
+#connects layers and blobs
+
+seed_weights [float X.XX]
+# seeds weights within range, net usually trained with starting weights within (-0.2;0.2), option is set with just one number in absolute value (correct - 0.2, incorrect: (-0.2), (-0.2 0.2))
+
+print
+# prints net config
+
+#that is all nessessary presets for net to be trained. After loading this file net is set and message will be printed displaying net parameters.
+
+
+
+
+
+
