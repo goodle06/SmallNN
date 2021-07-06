@@ -31,7 +31,7 @@
 
 #include <mkl.h>
 
-#include <WrappersAndServices/WindowsWrappers.h>
+#include <Proj/WrappersAndServices/WindowsWrappers.h>
 
 /*Third party */
 #define CVPLOT_HEADER_ONLY

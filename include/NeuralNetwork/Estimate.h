@@ -1,7 +1,7 @@
 #ifndef ESTIMATE_H
 #define ESTIMATE_H
 #include <Proj/Common.h>
-#include <Proj/NeuralNetwork/TranslationUnit.h>
+#include <Proj/NeuralNetwork/Blobs/TranslationUnit.h>
 #include <Proj/NeuralNetwork/LossFunction.h>
 
 

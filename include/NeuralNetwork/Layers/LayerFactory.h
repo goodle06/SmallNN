@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Proj/NeuralNetwork/Layer.h>
+#include <Proj/NeuralNetwork/Layers/Layer.h>
 #include <Proj/NeuralNetwork/Layers/ConvolutionalLayer.h>
 #include <Proj/NeuralNetwork/Layers/PoolingLayer.h>
 #include <Proj/NeuralNetwork/Layers/DeconvolutionalLayer.h>
