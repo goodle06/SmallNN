@@ -34,8 +34,6 @@ External dependencies:
 
 Installation guide:
 1. Clone repository;
-2. Create new project;
-3. Link to Intel MKL.
-4. Clone avir (https://github.com/avaneev/avir) and cvPlot(https://github.com/Profactor/cv-plot)
-5. Include <NeuralNetwork.h>
-6. Ready to go.
+2. Run CMake
+3. Link to Intel MKL (project properties -> intel perfomance libraries -> Use Intel MKL (sequential), Use ILP64 interfaces (yes))
+4. Ready to go.
