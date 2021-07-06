@@ -134,10 +134,6 @@ void NeuralNetwork::RunForward(float *X, float *WX, std::vector<float*> &pooling
     }
 }
 
-#if RUN_PARALLEL
-    //std::mutex grad_mutex;
-#endif
-
 void NeuralNetwork::RunMKL(const int no) {
 
     float* X, *WX, *D, *Z;
@@ -164,14 +160,7 @@ void NeuralNetwork::RunMKL(const int no) {
     size_t poolingMapsCounter=poolingMaps.size()-1;
     for (auto it=layers.rbegin();it!=layers.rend();++it) {
         (*it)->RunBackwards(Z,WX, D+k, poolingMaps[poolingMapsCounter]);
-#if RUN_PARALLEL
-       // grad_mutex.lock();
-#endif
         (*it)->CalculateGradient(D+k,X+k-(*it)->GetCols()); // Gradient is a shared memory
-#if RUN_PARALLEL
-      //  grad_mutex.unlock();
-#endif
-
         poolingMapsCounter--;
         Z=WX;
         k-=(*it)->GetCols();
@@ -544,134 +533,12 @@ void NeuralNetwork::CreateBackup() {
 }
 
 bool NeuralNetwork::RunCommand(std::string command) {
-    std::string fnameTrain="K:\\Blobs\\ConvolutionalBlobTrain.blob";
-    std::string fnameTest="K:\\Blobs\\ConvolutionalBlobTest.blob";
-    std::string fnameTranslation="K:\\TranslationUnits\\CharTranslationUnit.trun";
 
     if (command == "reset"|| executioner == nullptr) executioner = this;
-
     NetCommand cmd(command);
     executioner->ExecuteCommand(cmd);
 
-    if (command=="default") {
-        std::string TableTrainBlob="K:\\Blobs\\TrainTTB.blob";
-        std::string TableTestBlob="K:\\Blobs\\TestTTB.blob";
-        std::string TableTranslation="K:\\TranslationUnits\\TTB.trun";
-        NN::ConvolutionalLayer *conv1=new NN::ConvolutionalLayer(3,3,3,16, NN::ActivationFunctionType::RELU);
-        this->addLayer(conv1);
-        NN::Layer* fc1 = new NN::Layer({ 24 });
-        fc1->setActivationFunction("relu");
-        NN::Layer* fc2 = new NN::Layer({ 2 });
-        fc2->setActivationFunction("logistic");
-        this->addLayer(fc1);
-        this->addLayer(fc2);
-
-        NN::DataBlob* blobOne=new NN::DataBlob(TableTrainBlob, TableTranslation);
-        NN::DataBlob* blobTwo=new NN::DataBlob(TableTestBlob, TableTranslation);
-        edge_length=24;
-        blobOne->resize(edge_length,true);
-        blobTwo->resize(edge_length,true);
-        this->addTrainingData(blobOne);
-        this->addTestingData(blobTwo);
-        this->connect();
-
-        Transformation t1(TransformationType::sin);
-        blobOne->transform(t1);
-        blobTwo->transform(t1);
-
-        this->SetLossFunction(NN::LossFunctionType::BinaryCrossEntropy);
-
-        this->SeedWeights(-0.2f,0.2f);
-        return true;
-    }
-
-    if (command=="default2") {
-        NN::Layer* fc1 = new NN::Layer({ 56 });
-        fc1->setActivationFunction("logistic");
-        this->addLayer(fc1);
-
-        NN::DataBlob* blobOne=new NN::DataBlob(fnameTrain, fnameTranslation);
-        NN::DataBlob* blobTwo=new NN::DataBlob(fnameTest, fnameTranslation);
-        edge_length=24;
-        blobOne->resize(edge_length,true, false);
-        blobTwo->resize(edge_length,true, false);
-        this->addTrainingData(blobOne);
-        this->addTestingData(blobTwo);
-        this->connect();
-
-        Transformation t1(TransformationType::sin);
-        blobOne->transform(t1);
-        blobTwo->transform(t1);
-
-        this->SetLossFunction(NN::LossFunctionType::BinaryCrossEntropy);
-
-        this->SeedWeights(-0.3f,0.3f);
-        return true;
-    }
-
-    if (command=="default3") {
-        //NN::ConvolutionalLayer *conv1=new NN::ConvolutionalLayer(8, 4,4,2, NN::ActivationFunctionType::RELU);
-        NN::ConvolutionalLayer* conv1 = new NN::ConvolutionalLayer({ 8,4,4,2 });
-        conv1->setActivationFunction("relu");
-        NN::PoolingLayer *pool1=new NN::PoolingLayer(2,2,2);
-        NN::ConvolutionalLayer *conv2=new NN::ConvolutionalLayer(8, 3,3,1, NN::ActivationFunctionType::RELU);
-        NN::Layer* fc1 = new NN::Layer({ 56 });
-        fc1->setActivationFunction("logistic");
-        this->addLayer(conv1);
-        this->addLayer(pool1);
-        this->addLayer(conv2);
-        conv1->SetMaximumWeightChange(0.1f);
-        conv2->SetMaximumWeightChange(0.1f);
-        this->addLayer(fc1);
-
-        NN::DataBlob* blobOne=new NN::DataBlob(fnameTrain, fnameTranslation);
-        NN::DataBlob* blobTwo=new NN::DataBlob(fnameTest, fnameTranslation);
-        edge_length=22;
-        blobOne->resize(edge_length,true);
-        blobTwo->resize(edge_length,true);
-        this->addTrainingData(blobOne);
-        this->addTestingData(blobTwo);
-        if (this->connect()) {
-            Transformation t1(TransformationType::sin);
-            blobOne->transform(t1);
-            blobTwo->transform(t1);
-            this->SetLossFunction(NN::LossFunctionType::BinaryCrossEntropy);
-            this->SeedWeights(-0.2f,0.2f);
-        }
-        this->print();
-        return true;
-    }
-
-    if (command=="default4") {
-        NN::ConvolutionalLayer *conv1=new NN::ConvolutionalLayer(5,5,2,16, NN::ActivationFunctionType::RELU);
-        NN::ConvolutionalLayer *conv2=new NN::ConvolutionalLayer(3,3,1,16, NN::ActivationFunctionType::RELU);
-        NN::ConvolutionalLayer *conv3=new NN::ConvolutionalLayer(3,3,1,16, NN::ActivationFunctionType::RELU);
-        this->addLayer(conv1);
-        this->addLayer(conv2);
-        this->addLayer(conv3);
-        NN::Layer* fc1 = new NN::Layer({ 56 });
-        fc1->setActivationFunction("logistic");
-        this->addLayer(fc1);
-
-        NN::DataBlob* blobOne=new NN::DataBlob(fnameTrain, fnameTranslation);
-        NN::DataBlob* blobTwo=new NN::DataBlob(fnameTest, fnameTranslation);
-        edge_length=25;
-        blobOne->resize(edge_length,true, true);
-        blobTwo->resize(edge_length,true, true);
-        this->addTrainingData(blobOne);
-        this->addTestingData(blobTwo);
-        this->connect();
-
-        Transformation t1(TransformationType::sin);
-        blobOne->transform(t1);
-        blobTwo->transform(t1);
-
-        this->SetLossFunction(NN::LossFunctionType::BinaryCrossEntropy);
-
-        this->SeedWeights(-0.2f,0.2f);
-        return true;
-    }
-    return false;
+    
 }
 
 bool NeuralNetwork::LoadConfigFromFile(std::string config_filename)
