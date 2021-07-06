@@ -20,7 +20,7 @@ Datablobs organized as follows:
 5. Data of size (width x height);
 6. Label data of size equal to number of classes attributed to the sample;
 This type of dataset storage scheme permits to keep data of different sizes and classes.
-All data is stored as uchar, it leads to restrictions on size of input (lower than 255x255) and number of classes (lesser than 255). This issue will be addressed after development of fully convolutional neural networks.
+All data is stored as uchar, it leads to restrictions on size of input (lower than 255x255) and number of classes (less than 255). This issue will be addressed after development of fully convolutional neural networks.
 
 As dataset are loaded you are free to resize images and/or pad, preserving aspect ratio of not (Library responsible for resizing is avir). You also can make certain transformations of underlying data, for example in my networks I found it useful to transform X to sin(X) or cos(X). You can also display any image by index by running Display function.
 
