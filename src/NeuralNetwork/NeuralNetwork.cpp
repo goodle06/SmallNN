@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/NeuralNetwork.h>
+#include <NeuralNetwork/NeuralNetwork.h>
 
 namespace NN {
 

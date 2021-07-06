@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Blobs/DataBlob.h>
+#include <NeuralNetwork/Blobs/DataBlob.h>
 
 
 namespace NN {

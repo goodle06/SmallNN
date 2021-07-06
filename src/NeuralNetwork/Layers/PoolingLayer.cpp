@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Layers/PoolingLayer.h>
+#include <NeuralNetwork/Layers/PoolingLayer.h>
 
 namespace NN {
 

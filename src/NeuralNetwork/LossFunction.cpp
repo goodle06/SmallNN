@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/LossFunction.h>
+#include <NeuralNetwork/LossFunction.h>
 
 namespace NN {
 

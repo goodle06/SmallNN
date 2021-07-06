@@ -1,7 +1,7 @@
 #ifndef ORIGINALSAMPLE_H
 #define ORIGINALSAMPLE_H
-#include <Proj/NeuralNetwork/Blobs/DataTransformation.h>
-#include <3party/avir.h>
+#include <NeuralNetwork/Blobs/DataTransformation.h>
+#include <avir/avir.h>
 
 namespace NN {
 

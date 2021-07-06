@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Layers/ConvolutionalLayer.h>
+#include <NeuralNetwork/Layers/ConvolutionalLayer.h>
 
 namespace NN {
 

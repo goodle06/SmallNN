@@ -1,15 +1,15 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-#include <Proj/NeuralNetwork/Layers/LayerFactory.h>
-#include <Proj/NeuralNetwork/LossFunctionFactory.h>
-#include <Proj/NeuralNetwork/ActivationFunctionFactory.h>
-#include <Proj/NeuralNetwork/Object.h>
+#include <NeuralNetwork/Layers/LayerFactory.h>
+#include <NeuralNetwork/LossFunctionFactory.h>
+#include <NeuralNetwork/ActivationFunctionFactory.h>
+#include <NeuralNetwork/Object.h>
 
-#include <Proj/NeuralNetwork/Blobs/OriginalSample.h>
-#include <Proj/NeuralNetwork/NetTelemetry.h>
-#include <Proj/NeuralNetwork/Estimate.h>
-#include <Proj/NeuralNetwork/TrainingTelemetry.h>
+#include <NeuralNetwork/Blobs/OriginalSample.h>
+#include <NeuralNetwork/NetTelemetry.h>
+#include <NeuralNetwork/Estimate.h>
+#include <NeuralNetwork/TrainingTelemetry.h>
 
 
 namespace NN {

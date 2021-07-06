@@ -1,12 +1,12 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-#include <Proj/NeuralNetwork/ActivationFunctionFactory.h>
-#include <Proj/NeuralNetwork/Object.h>
+#include <NeuralNetwork/ActivationFunctionFactory.h>
+#include <NeuralNetwork/Object.h>
 
-#include <Proj/NeuralNetwork/Blobs/DataBlob.h>
-#include <Proj/WrappersAndServices/FStreamInterface.h>
-#include <Proj/NeuralNetwork/CommandParser.h>
+#include <NeuralNetwork/Blobs/DataBlob.h>
+#include <WrappersAndServices/FStreamInterface.h>
+#include <NeuralNetwork/CommandParser.h>
 
 
 

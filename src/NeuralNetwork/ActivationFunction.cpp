@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/ActivationFunction.h>
+#include <NeuralNetwork/ActivationFunction.h>
 
 namespace NN {
 

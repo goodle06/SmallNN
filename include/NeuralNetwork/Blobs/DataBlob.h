@@ -1,9 +1,9 @@
 #ifndef DATABLOB_H
 #define DATABLOB_H
 
-#include <Proj/NeuralNetwork/Blobs/OriginalSample.h>
-#include <Proj/NeuralNetwork/Blobs/TranslationUnit.h>
-#include <Proj/NeuralNetwork/Object.h>
+#include <NeuralNetwork/Blobs/OriginalSample.h>
+#include <NeuralNetwork/Blobs/TranslationUnit.h>
+#include <NeuralNetwork/Object.h>
 
 namespace NN {
 

@@ -1,7 +1,7 @@
 #ifndef ACTIVATIONFUNCTION_H
 #define ACTIVATIONFUNCTION_H
 
-#include <Proj/Common.h>
+#include <Common.h>
 
 namespace NN {
 

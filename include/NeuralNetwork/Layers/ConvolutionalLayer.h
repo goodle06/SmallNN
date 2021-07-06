@@ -1,8 +1,8 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-#include <Proj/NeuralNetwork/Layers/Layer.h>
-#include <Proj/NeuralNetwork/Blobs/DataBlob.h>
+#include <NeuralNetwork/Layers/Layer.h>
+#include <NeuralNetwork/Blobs/DataBlob.h>
 
 
 namespace NN {

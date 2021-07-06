@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 3.18)
 
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-projec(small_nn)
+project(small_nn)
 
 set(SOURCES
+	SmallNN.cpp
+
 	src/DesignPatterns/Factory.cpp
 
 	src/WrappersAndServices/FStreamInterface.cpp
 	src/WrappersAndServices/WindowsWrappers.cpp
 
 	src/NeuralNetwork/Blobs/DataBlob.cpp
-	src/NeuralNetwork/Blobs/DataTransformtion.cpp
+	src/NeuralNetwork/Blobs/DataTransformation.cpp
 	src/NeuralNetwork/Blobs/OriginalSample.cpp
 	src/NeuralNetwork/Blobs/TranslationUnit.cpp
 
@@ -28,12 +31,16 @@ set(SOURCES
 	src/NeuralNetwork/LossFunction.cpp
 	src/NeuralNetwork/NetTelemetry.cpp
 	src/NeuralNetwork/NeuralNetwork.cpp
-	src/NeuralNetwork/TrainingTelemtry.cpp
+	src/NeuralNetwork/TrainingTelemetry.cpp
 )
 
 option(USE_OPENCV "Using openCV" ON)
 
-add_executables(small_nn ${SOURCES})
+add_executable(small_nn ${SOURCES})
 
-target_include_directories(small_nn PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(small_nn PRIVATE 
+	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/include/3party/CvPlot/CvPlot/inc
+	${PROJECT_SOURCE_DIR}/include/3party
+)
 

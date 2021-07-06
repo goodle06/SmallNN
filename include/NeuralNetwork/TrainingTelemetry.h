@@ -1,7 +1,7 @@
 #ifndef TRAININGTELEMETRY_H
 #define TRAININGTELEMETRY_H
 
-#include <Proj/Common.h>
+#include <Common.h>
 
 
 namespace NN {

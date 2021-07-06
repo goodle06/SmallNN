@@ -1,7 +1,7 @@
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
 
-#include <Proj/NeuralNetwork/Layers/ConvolutionalLayer.h>
+#include <NeuralNetwork/Layers/ConvolutionalLayer.h>
 
 namespace NN {
 

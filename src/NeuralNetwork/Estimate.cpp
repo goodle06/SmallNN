@@ -1,4 +1,4 @@
-#include "Proj/NeuralNetwork/Estimate.h"
+#include "NeuralNetwork/Estimate.h"
 
 namespace NN {
 

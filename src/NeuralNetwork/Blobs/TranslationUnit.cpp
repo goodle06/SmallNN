@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Blobs/TranslationUnit.h>
+#include <NeuralNetwork/Blobs/TranslationUnit.h>
 
 namespace NN {
 

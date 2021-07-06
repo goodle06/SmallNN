@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/CommandParser.h>
+#include <NeuralNetwork/CommandParser.h>
 
 
 namespace NN {

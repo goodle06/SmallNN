@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Blobs/DataTransformation.h>
+#include <NeuralNetwork/Blobs/DataTransformation.h>
 
 
 namespace NN {

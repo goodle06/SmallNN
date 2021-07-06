@@ -1,6 +1,6 @@
 #ifndef LOSSFUNTION_H
 #define LOSSFUNTION_H
-#include <Proj/Common.h>
+#include <Common.h>
 
 namespace NN {
 

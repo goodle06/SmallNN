@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/TrainingTelemetry.h>
+#include <NeuralNetwork/TrainingTelemetry.h>
 
 namespace NN {
 

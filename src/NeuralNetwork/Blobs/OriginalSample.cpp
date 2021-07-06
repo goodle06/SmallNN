@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Blobs/OriginalSample.h>
+#include <NeuralNetwork/Blobs/OriginalSample.h>
 
 
 namespace NN {

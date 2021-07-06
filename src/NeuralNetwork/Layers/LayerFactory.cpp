@@ -1,4 +1,4 @@
-#include <Proj/NeuralNetwork/Layers/LayerFactory.h>
+#include <NeuralNetwork/Layers/LayerFactory.h>
 
 
 namespace NN {

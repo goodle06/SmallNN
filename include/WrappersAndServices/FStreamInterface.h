@@ -1,7 +1,7 @@
 #ifndef FSTREAMINTERFACE_H
 #define FSTREAMINTERFACE_H
 
-#include <Proj/Common.h>
+#include <Common.h>
 
 void UploadToStream(int *data, std::fstream &stream, int count) ;
 int DownloadIntFromStream(std::fstream &stream) ;

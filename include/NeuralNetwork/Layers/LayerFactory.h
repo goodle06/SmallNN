@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Proj/NeuralNetwork/Layers/Layer.h>
-#include <Proj/NeuralNetwork/Layers/ConvolutionalLayer.h>
-#include <Proj/NeuralNetwork/Layers/PoolingLayer.h>
-#include <Proj/NeuralNetwork/Layers/DeconvolutionalLayer.h>
-#include <Proj/DesignPatterns/Factory.h>
+#include <NeuralNetwork/Layers/Layer.h>
+#include <NeuralNetwork/Layers/ConvolutionalLayer.h>
+#include <NeuralNetwork/Layers/PoolingLayer.h>
+#include <NeuralNetwork/Layers/DeconvolutionalLayer.h>
+#include <DesignPatterns/Factory.h>
 
 
 namespace NN {

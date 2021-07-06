@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Proj/NeuralNetwork/LossFunction.h>
-#include <Proj/DesignPatterns/Factory.h>
+#include <NeuralNetwork/LossFunction.h>
+#include <DesignPatterns/Factory.h>
 
 
 namespace NN {
