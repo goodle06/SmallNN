@@ -532,13 +532,12 @@ void NeuralNetwork::CreateBackup() {
     for (auto &layer : layers) layer->CreateBackup();
 }
 
-bool NeuralNetwork::RunCommand(std::string command) {
+void NeuralNetwork::RunCommand(std::string command) {
 
     if (command == "reset"|| executioner == nullptr) executioner = this;
     NetCommand cmd(command);
     executioner->ExecuteCommand(cmd);
 
-    
 }
 
 bool NeuralNetwork::LoadConfigFromFile(std::string config_filename)

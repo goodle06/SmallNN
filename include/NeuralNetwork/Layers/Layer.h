@@ -81,7 +81,6 @@ enum class LayerType : int { FC=0, Conv=1, MaxPool=2, Deconv=3, Unpool=4 };
         /*creates backup to which to rollback*/
         virtual void CreateBackup();
 
-        LayerType mLayerType=LayerType::FC;
         
         /*setters and getters for weights freezing*/
         void FreezeWeights() { open = false; }

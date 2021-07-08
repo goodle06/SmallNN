@@ -57,7 +57,7 @@ public:
     void RollBack();
     void CreateBackup();
 
-    bool RunCommand(std::string command);
+    void RunCommand(std::string command);
     bool LoadConfigFromFile(std::string filename);
     bool LoadConfigFromFile();
     void saveStd(const std::string& filename) const;
