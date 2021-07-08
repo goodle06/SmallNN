@@ -467,25 +467,6 @@ void NeuralNetwork::loadStd(const std::string& filename) {
     }
 }
 
-void NeuralNetwork::clear() {
-    
-    for (int i = 0; i < layers.size(); i++) delete layers[i];
-    layers.clear();
-    delete testBlob;
-    testBlob = nullptr;
-    delete trainBlob;
-    trainBlob = nullptr;
-
-    lossFunc=nullptr;
-    edge_length=0;
-    net_name="";
-
-    weights_total=0;
-    net_rows=0;
-    net_input_sz=0;
-    net_output_sz=0;
-    m_loss=0.0f;
-}
 
 void NeuralNetwork::printConfiguration() const {
     LOG << "Input dimension: " << net_input_sz << "(" << edge_length << "x" << edge_length << ")\n";
@@ -566,7 +547,7 @@ void NeuralNetwork::print() const {
     for (auto& l : layers) l->print();
 
     LOG << "Loss function: " << lossFunc->print() << "\n";
-    LOG << "Elapsed time: " << training_duration.count() << " seconds\n";
+    LOG << "Elapsed time: " << std::setprecision(3) << training_duration.count() << " seconds\n";
 }
 
 DataBlob* NeuralNetwork::GetCurrentDataset() {

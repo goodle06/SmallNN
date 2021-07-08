@@ -33,43 +33,58 @@ public:
     };
 
 
+    /*Trains net*/
     void train(TrainingOptions options);
     void train();
     void train(const int epochs, const int batchSize, const float learing_rate);
+
+    /*reverse last training weights update*/
+    void RollBack();
+
+    /*connecting all layers and blobs, this function is nessessary to seed weights and train/run net*/
     bool connect();
+
+    /*forward pass for set datablob, first variable is responsible for console output*/
     float RunOnce(bool print_estimate, DataBlob *blobX);
+    /*runs on current datablob, chosen with SelectDataset function*/
     void RunOnce();
+    /*predicts estimate for provided sample. 
+    Performs autoresizing via padding which can cause incorrect predictions if data was resized normally (not just padded to fit)
+    TODO: refactor to take only properly sized input of type Sample*/
     Estimate getEstimate(float *X);
 
-
+    /*push layers to the net, allows only consequential connections*/
+    /*TODO: connect layers vith graph structure*/
     void addLayer(Layer *layer);
 
+    /*adds respective datablobs*/
     void addTrainingData(NN::DataBlob* blob);
     void addTestingData(NN::DataBlob* blob);
 
+    /*seeds weights within lower and upper bounds, seeding is performed with uniform distribution*/
+    /*TODO: add other types of distributions*/
     void SeedWeights(const float lower_bound=0.0f, const float upper_bound=0.01f);
-
+    
+    /*Sets loss function to the net*/
     void SetLossFunction(LossFunction* function);
     void SetLossFunction(LossFunctionType type);
     void SetLossFunction(std::string type);
 
+    /*Provides file dialog to chose net from file, Windows only*/
     void LoadNetFromFile();
-    void RollBack();
-    void CreateBackup();
+    /*loads net from filename*/
+    void loadStd(const std::string& filename);
+    /*save net to file*/
+    void saveStd(const std::string& filename) const;
 
-    void RunCommand(std::string command);
+    /*configures empty net from file*/
     bool LoadConfigFromFile(std::string filename);
     bool LoadConfigFromFile();
-    void saveStd(const std::string& filename) const;
-    void loadStd(const std::string& filename);
-    void clear();
 
-
-    NetTelemetry status;
-    TrainingTelemetry training_telemetry;
-    TranslationUnit translation;
-    std::chrono::duration<double> training_duration;
-    TrainingOptions options;
+    /*string type commands*/
+    void RunCommand(std::string command);
+    /*runs command in cmd type, derived from pure virtual Object class*/
+    void ExecuteCommand(NetCommand& cmd) override;
 
     void print() const;
     void printConfiguration() const;
@@ -79,28 +94,25 @@ public:
     NN::DataBlob* trainBlob=nullptr;
     NN::DataBlob* testBlob=nullptr;
 
-    int edge_length=0;
-    std::string net_name="";
-
-    int getNeuronsCount();
-    int getWeightsCount();
-
-    void ExecuteCommand(NetCommand &cmd) override;
-
+    /*select for running net and displaying blob info of that dataset: "train" or "test"*/
     void SelectDataset(std::string which_one);
-    DataBlob* GetCurrentDataset();
 private:
+    void CreateBackup();
     void RunMKL(const int no);
     void UpdateWeights(const int batchSize);
     void RunForward(float *X, float *WX,    std::vector<float*> &poolingMaps, float* Derivative=nullptr);
     void RunForward(float *X, float *WX);
 
     //calls LayerFactoryRegister to register layer available layer types in LayerFactory
+    /*Probably better to make registers static*/
     void RegisterLayers(); 
     void RegisterLossFunctions();
     void RegisterComponents();
 
+    /*getter*/
+    DataBlob* GetCurrentDataset();
     NN::DataBlob* currentDataset=nullptr;
+    
     NN::Layer* currentLayer=nullptr;
 
     NN::LossFunction* lossFunc=nullptr;
@@ -110,7 +122,15 @@ private:
     int net_input_sz=0;
     int net_output_sz=0;
     float m_loss=0.0f;
+    int edge_length = 0;
+    std::string net_name = "";
 
+    NetTelemetry status;
+    TrainingTelemetry training_telemetry;
+    std::chrono::duration<double> training_duration=std::chrono::seconds(0);
+    TrainingOptions options;
+    int getNeuronsCount();
+    int getWeightsCount();
     std::vector<Layer*> layers;
     DesignPatterns::Factory<NN::Layer, std::string, NN::Layer* (*)()> layerFactory;
     DesignPatterns::Factory<LossFunction, std::string, LossFunction* (*)()> lossFunctionFactory;

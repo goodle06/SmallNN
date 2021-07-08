@@ -18,7 +18,7 @@ public:
     void loadTranslation();
 
     int getMemorySize();
-    size_t size()  {return maindata.size();}
+    size_t size() const {return maindata.size();}
     int vector_size() {return vector_dimension;}
     void uploadSample(cv::Mat sample, const int character);
     void uploadSample(OriginalSample sample);
