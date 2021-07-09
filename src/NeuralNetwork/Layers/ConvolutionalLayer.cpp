@@ -5,14 +5,13 @@ namespace NN {
 
 
 ConvolutionalLayer::ConvolutionalLayer(int filter_count, int window_height, int window_width, int stride, NN::ActivationFunctionType f_type, int padding) {
-     m_window_height=window_height;
-     m_window_width=window_width;
-     m_window_stride=stride;
-     m_filter_count=filter_count;
-     m_padding=padding;
+     m_filter.height=window_height;
+     m_filter.width=window_width;
+     m_filter.stride=stride;
+     m_output_volume.depth=filter_count;
+     m_filter.padding=padding;
      this->setActivationFunction(f_type);
 }
-
 
 
 ConvolutionalLayer::ConvolutionalLayer(std::initializer_list<int> params)
@@ -23,11 +22,11 @@ ConvolutionalLayer::ConvolutionalLayer(std::initializer_list<int> params)
 void ConvolutionalLayer::SetParams(std::initializer_list<int> params)
 {
     auto p = params.begin();
-    if (p != params.end()) m_filter_count = *p;
-    if (p + 1 != params.end()) m_window_height = *(++p);
-    if (p + 1 != params.end()) m_window_width = *(++p);
-    if (p + 1 != params.end()) m_window_stride = *(++p);
-    if (p + 1 != params.end()) m_padding = *(++p);
+    if (p != params.end()) m_output_volume.depth = *p;
+    if (p + 1 != params.end()) m_filter.height = *(++p);
+    if (p + 1 != params.end()) m_filter.width = *(++p);
+    if (p + 1 != params.end()) m_filter.stride = *(++p);
+    if (p + 1 != params.end()) m_filter.padding = *(++p);
 }
 
 
@@ -50,25 +49,25 @@ ConvolutionalLayer::~ConvolutionalLayer() {
 bool ConvolutionalLayer::SetConnections(Layer *prev) {
 
     ConvolutionalLayer *child=dynamic_cast<ConvolutionalLayer*>(prev);
-    inVolumeHeight=child->outVolumeHeight;
-    inVolumeWidth=child->outVolumeWidth;
-    inVolumeDepth=child->m_filter_count;
+    m_input_volume.height=child->m_output_volume.height;
+    m_input_volume.width=child->m_output_volume.width;
+    m_input_volume.depth=child->m_output_volume.depth;
     if (!CalcInternalParams()) return false;
     assignMemory();
     return true;
 }
 
 bool ConvolutionalLayer::SetConnections(DataBlob &blob) {
-    inVolumeHeight=blob.height;
-    inVolumeWidth=blob.width;
-    inVolumeDepth=1;
+    m_input_volume.height=blob.height;
+    m_input_volume.width=blob.width;
+    m_input_volume.depth=1;
     if (!CalcInternalParams()) return false;
     assignMemory();
     return true;
 }
 
 void ConvolutionalLayer::assignMemory() {
-    values_source=(float*)mkl_malloc(sizeof(float)*(inVolumeDepth*m_window_height*m_window_width*m_filter_count+m_filter_count),64);
+    values_source=(float*)mkl_malloc(sizeof(float)*(m_input_volume.depth*m_filter.height*m_filter.width*m_output_volume.depth+m_output_volume.depth),64);
     assignMemoryInternal();
     MapLayer();
 }
@@ -80,7 +79,7 @@ void ConvolutionalLayer::assignMemory(float *src) {
 }
 
 void ConvolutionalLayer::assignMemoryInternal() {
-    offset_vector_dense=values_source+inVolumeDepth*m_window_height*m_window_width*m_filter_count;
+    offset_vector_dense=values_source+m_input_volume.depth*m_filter.height*m_filter.width*m_output_volume.depth;
 
     values=(float*)mkl_calloc(dense_filter_length*rows+rows, sizeof(float),64);
     offset_vector=values+dense_filter_length*rows;
@@ -89,8 +88,8 @@ void ConvolutionalLayer::assignMemoryInternal() {
     pointerB=(long long*)mkl_malloc(sizeof(long long)*rows,64);
     pointerE=(long long*)mkl_malloc(sizeof(long long)*rows,64);
 
-    gradient_values_source=(float*)mkl_calloc(dense_filter_length*m_filter_count+m_filter_count,sizeof(float),64);
-    offset_gradient_source=gradient_values_source+dense_filter_length*m_filter_count;
+    gradient_values_source=(float*)mkl_calloc(dense_filter_length*m_output_volume.depth+m_output_volume.depth,sizeof(float),64);
+    offset_gradient_source=gradient_values_source+dense_filter_length*m_output_volume.depth;
 
     pointers_to_gradient_values=(float**)mkl_malloc(sizeof(float*)*dense_filter_length*rows,64);
     layer_gradient=(float*)mkl_calloc(total_count,sizeof (float),64);
@@ -101,20 +100,20 @@ void ConvolutionalLayer::assignMemoryInternal() {
 
 
 bool ConvolutionalLayer:: CalcInternalParams() {
-    this->dense_filter_length=inVolumeDepth*m_window_height*m_window_width;
-    this->dense_weights_count=dense_filter_length*m_filter_count+m_filter_count;
+    this->dense_filter_length=m_input_volume.depth*m_filter.height*m_filter.width;
+    this->dense_weights_count=dense_filter_length*m_output_volume.depth+m_output_volume.depth;
 
     /* Filter stride check*/
-    if ((this->inVolumeHeight-m_window_height)%m_window_stride!=0
-            ||(this->inVolumeWidth-m_window_width)%m_window_stride!=0) {
+    if ((this->m_input_volume.height-m_filter.height)%m_filter.stride!=0
+            ||(this->m_input_volume.width-m_filter.width)%m_filter.stride!=0) {
         std::cout << "Window stride leads to necessity of input padding. This functionality isn't ready yet\n";
         return false;
     }
 
-    this->outVolumeHeight=(this->inVolumeHeight-m_window_height)/m_window_stride+1;
-    this->outVolumeWidth=(this->inVolumeWidth-m_window_width)/m_window_stride+1;
-    rows=this->outVolumeHeight*this->outVolumeWidth*m_filter_count;
-    cols=inVolumeDepth*inVolumeHeight*inVolumeWidth;
+    this->m_output_volume.height=(this->m_input_volume.height-m_filter.height)/m_filter.stride+1;
+    this->m_output_volume.width=(this->m_input_volume.width-m_filter.width)/m_filter.stride+1;
+    rows=this->m_output_volume.height*this->m_output_volume.width*m_output_volume.depth;
+    cols=m_input_volume.depth*m_input_volume.height*m_input_volume.width;
     total_count=rows*cols+rows;
     return true;
 }
@@ -142,19 +141,19 @@ int getMatrixIndex(CBLAS_LAYOUT layout,int row, int col, int rows_count, int col
 void ConvolutionalLayer::MapLayer() {
     int sparse_index=0;
     int f_row, f_col;
-    for (int f=0;f<m_filter_count;f++) {
-        for (int y=0;y<outVolumeHeight;y++) {
-            for (int x=0;x<outVolumeWidth;x++) {
-                f_row=x+y*outVolumeWidth+f*outVolumeHeight*outVolumeWidth; /*one filter gives ((input_width-filter_width)/stride+1)x((input_height-filter_height)/stride+1)
-                                                                              or outVolumeWidth*OutVolumeHeight
+    for (int f=0;f<m_output_volume.depth;f++) {
+        for (int y=0;y<m_output_volume.height;y++) {
+            for (int x=0;x<m_output_volume.width;x++) {
+                f_row=x+y*m_output_volume.width+f*m_output_volume.height*m_output_volume.width; /*one filter gives ((input_width-filter_width)/stride+1)x((input_height-filter_height)/stride+1)
+                                                                              or m_output_volume.width*m_output_volume.height
                                                                               rows to the sparse matrix*/
-                pointerB[f_row]=f_row*m_window_height*m_window_width*inVolumeDepth; /* begining of row is rows index multiplied by the number of non-zero values in one row which equals filter length X*/
-                pointerE[f_row]=pointerB[f_row]+m_window_height*m_window_width*inVolumeDepth;
-                for (int d=0;d<inVolumeDepth;d++) {
-                    for (int wy=0;wy<m_window_height;wy++) {
-                        for (int wx=0;wx<m_window_width;wx++) {
-                            f_col=d*inVolumeHeight*inVolumeWidth // input filter column shift
-                                    + (y*m_window_stride+wy)*inVolumeWidth+(x*m_window_stride+wx); //window shift
+                pointerB[f_row]=f_row*m_filter.height*m_filter.width*m_input_volume.depth; /* begining of row is rows index multiplied by the number of non-zero values in one row which equals filter length X*/
+                pointerE[f_row]=pointerB[f_row]+m_filter.height*m_filter.width*m_input_volume.depth;
+                for (int d=0;d<m_input_volume.depth;d++) {
+                    for (int wy=0;wy<m_filter.height;wy++) {
+                        for (int wx=0;wx<m_filter.width;wx++) {
+                            f_col=d*m_input_volume.height*m_input_volume.width // input filter column shift
+                                    + (y*m_filter.stride+wy)*m_input_volume.width+(x*m_filter.stride+wx); //window shift
                             columns[sparse_index]=f_col;
                             pointers_to_gradient_values[sparse_index]=getMatrixPointer(CblasColMajor,f_row,f_col,rows,cols,layer_gradient);
                             sparse_index++;
@@ -170,14 +169,14 @@ void ConvolutionalLayer::MapLayer() {
 }
 
 void ConvolutionalLayer::CopyValues(float *src) {
-    for (int f=0;f<m_filter_count;f++) {
-        for (int shift=0;shift<outVolumeHeight*outVolumeWidth;shift++) {
-            std::memcpy(&values[f*dense_filter_length*outVolumeHeight*outVolumeWidth+shift*dense_filter_length],&src[f*dense_filter_length],dense_filter_length*sizeof (float));
+    for (int f=0;f<m_output_volume.depth;f++) {
+        for (int shift=0;shift<m_output_volume.height*m_output_volume.width;shift++) {
+            std::memcpy(&values[f*dense_filter_length*m_output_volume.height*m_output_volume.width+shift*dense_filter_length],&src[f*dense_filter_length],dense_filter_length*sizeof (float));
         }
     }
-    int dummy1=outVolumeHeight*outVolumeWidth;
+    int dummy1=m_output_volume.height*m_output_volume.width;
     float* dummy2=offset_vector;
-    for (int f=0;f<m_filter_count;f++ ) {
+    for (int f=0;f<m_output_volume.depth;f++ ) {
         std::fill(dummy2,dummy2+dummy1,offset_vector_dense[f]);
         dummy2+=dummy1;
     }
@@ -188,7 +187,7 @@ void ConvolutionalLayer::SeedWeights(const float lower_bound, const float upper_
     std::default_random_engine e1(dev());
     std::uniform_real_distribution<float> dist(lower_bound,upper_bound);
 
-    for (int f=0;f<m_filter_count;f++) {
+    for (int f=0;f<m_output_volume.depth;f++) {
         for (int w=0;w<dense_filter_length;w++) {
             values_source[w+f*dense_filter_length]=dist(e1);
         }
@@ -214,10 +213,10 @@ void ConvolutionalLayer::RunBackwards(float *vector, float *destination,float *d
 void ConvolutionalLayer::UpdateWeights(const int batchSize, const float learning_rate) {
 
     if (open) {
-        int filter_rows=outVolumeHeight*outVolumeWidth;
+        int filter_rows=m_output_volume.height*m_output_volume.width;
         float learning_coeff=-learning_rate/(float)batchSize;
         float *off_grad=offset_gradient;
-        for (int f=0;f<m_filter_count;f++) {
+        for (int f=0;f<m_output_volume.depth;f++) {
             for (int f_row=0;f_row<filter_rows;f_row++) {
                 for (int g=0;g<dense_filter_length;g++) {
                     gradient_values_source[f*dense_filter_length+g]+=*pointers_to_gradient_values[f*dense_filter_length*filter_rows+f_row*dense_filter_length+g];
@@ -228,7 +227,7 @@ void ConvolutionalLayer::UpdateWeights(const int batchSize, const float learning
         }
         if (max_change) {
             float max_grad=max_change/-learning_coeff;
-            for (int i=0;i<dense_filter_length*m_filter_count+m_filter_count;i++) {
+            for (int i=0;i<dense_filter_length*m_output_volume.depth+m_output_volume.depth;i++) {
                 if (gradient_values_source[i]>max_grad)
                     gradient_values_source[i]=max_grad;
                 else if(gradient_values_source[i]<-max_grad)
@@ -236,7 +235,7 @@ void ConvolutionalLayer::UpdateWeights(const int batchSize, const float learning
             }
         }
 
-        cblas_saxpy(dense_filter_length*m_filter_count+m_filter_count,learning_coeff,gradient_values_source,1,values_source,1);
+        cblas_saxpy(dense_filter_length*m_output_volume.depth+m_output_volume.depth,learning_coeff,gradient_values_source,1,values_source,1);
         this->CopyValues(values_source);
         if (weights_logging)
             weights_log.insert(weights_log.end(),&values_source[0],&values_source[dense_weights_count]); //copying weights to the log
@@ -250,10 +249,10 @@ void ConvolutionalLayer::UpdateWeights(const int batchSize, const float learning
 void ConvolutionalLayer::print(bool weights) const {
 
     LOG << "Layer type: convolutional, ";
-    LOG << "Size: " << m_window_height << "x" << m_window_width << "x" << m_filter_count << ", " << "stride " << m_window_stride << ", ";
+    LOG << "Size: " << m_filter.height << "x" << m_filter.width << "x" << m_output_volume.depth << ", " << "stride " << m_filter.stride << ", ";
     LOG << "type: " << m_activation_function->print() << "\n";
     if (weights) {
-        for (int i=0;i<m_filter_count;i++) {
+        for (int i=0;i<m_output_volume.depth;i++) {
             for (int j=0;j<dense_filter_length;j++) {
                 LOG << values_source[i*dense_filter_length+j] << " ";
             }
@@ -263,7 +262,7 @@ void ConvolutionalLayer::print(bool weights) const {
 }
 
 void ConvolutionalLayer::printNeuron(const int no) const {
-    if (no >=m_filter_count) {
+    if (no >=m_output_volume.depth) {
         std::cout << "filter count is less then no\n";
         return;
     }
@@ -272,7 +271,7 @@ void ConvolutionalLayer::printNeuron(const int no) const {
     for (int i=0;i<dense_filter_length;i++) {
         std::cout <<  std::fixed << std::setprecision(4) << values_source[i+no*dense_filter_length] << " ";
         newline++;
-        if (newline%m_window_width==0) std::cout << "\n";
+        if (newline%m_filter.width==0) std::cout << "\n";
     }
     std::cout << "b: " << values_source[dense_weights_count-dense_weights_count+no] << "\n";
 }
@@ -280,10 +279,10 @@ void ConvolutionalLayer::printNeuron(const int no) const {
 void ConvolutionalLayer::printGradient() const {
 
     LOG << "Layer type: convolutional, ";
-    LOG << "Size: " << m_window_height << "x" << m_window_width << "x" << m_filter_count << ", " << "stride " << m_window_stride << ", ";
+    LOG << "Size: " << m_filter.height << "x" << m_filter.width << "x" << m_output_volume.depth << ", " << "stride " << m_filter.stride << ", ";
     LOG << "type: " << m_activation_function->print() << "\n";
     LOG << "Gradients:\n";
-    for (int i=0;i<m_filter_count;i++) {
+    for (int i=0;i<m_output_volume.depth;i++) {
         for (int j=0;j<dense_filter_length;j++) {
             LOG << gradient_values_source[i*dense_filter_length+j] << " ";
         }
@@ -293,13 +292,13 @@ void ConvolutionalLayer::printGradient() const {
 }
 
 void ConvolutionalLayer::CreateBackup() {
-    int val_count=inVolumeDepth*m_window_height*m_window_width*rows;
+    int val_count=m_input_volume.depth*m_filter.height*m_filter.width*rows;
     if (!echo_values) echo_values=(float*)mkl_malloc(val_count*sizeof (float),64);
     std::memcpy(echo_values,values,val_count*sizeof(float));
 }
 
 void ConvolutionalLayer::Rollback() {
-    int val_count=inVolumeDepth*m_window_height*m_window_width*rows;
+    int val_count=m_input_volume.depth*m_filter.height*m_filter.width*rows;
     std::memcpy(values,echo_values,val_count*sizeof(float));
 }
 
@@ -308,13 +307,13 @@ void ConvolutionalLayer::SaveStd(std::fstream &stream) {
 
     int ltype=static_cast<int>(this->Type());
     int atype=static_cast<int>(this->m_activation_function->type());
-    int ww=m_window_width;
-    int wh=m_window_height;
-    int ws=m_window_stride;
-    int fc=m_filter_count;
-    int vh=inVolumeHeight;
-    int vw=inVolumeWidth;
-    int vd=inVolumeDepth;
+    int ww=m_filter.width;
+    int wh=m_filter.height;
+    int ws=m_filter.stride;
+    int fc=m_output_volume.depth;
+    int vh=m_input_volume.height;
+    int vw=m_input_volume.width;
+    int vd=m_input_volume.depth;
 
     std::vector<int> data_for_stream={ltype, atype, ww,wh,ws,fc,vh,vw,vd};
     for (auto d : data_for_stream) UploadToStream(&d,stream,1);
@@ -335,14 +334,14 @@ void ConvolutionalLayer::LoadStd(std::fstream &stream) {
 
 
     setActivationFunction(act_func);
-    m_window_width=data_from_stream[0];
-    m_window_height=data_from_stream[1];
-    m_window_stride=data_from_stream[2];
-    m_filter_count=data_from_stream[3];
+    m_filter.width=data_from_stream[0];
+    m_filter.height=data_from_stream[1];
+    m_filter.stride=data_from_stream[2];
+    m_output_volume.depth=data_from_stream[3];
 
-    inVolumeHeight=data_from_stream[4];
-    inVolumeWidth=data_from_stream[5];
-    inVolumeDepth=data_from_stream[6];
+    m_input_volume.height=data_from_stream[4];
+    m_input_volume.width=data_from_stream[5];
+    m_input_volume.depth=data_from_stream[6];
 
     CalcInternalParams();
 

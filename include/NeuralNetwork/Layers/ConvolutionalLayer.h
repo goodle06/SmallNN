@@ -40,22 +40,23 @@ public:
 
     std::vector<float> getlog(int weight_no) override;
 
-    int inVolumeHeight=0;
-    int inVolumeWidth=0;
-    int inVolumeDepth=0;
-    int outVolumeHeight=0;
-    int outVolumeWidth=0;
+    struct Volume {
+        int height = 0; int width = 0; int depth = 0;
+        int Length() { return height * width * depth; }
+    };
+    struct Filter  {
+        int height = 0; int width = 0; int stride = 0; int padding = 0;
+        int Length() { return height * width; }
+    };
 
-    int m_filter_count=0;
-    int m_window_height=0;
-    int m_window_width=0;
-    int m_window_stride=1;
-    int m_padding=0;
+    Volume GetOutputVolume() { return m_output_volume; }
+    void SetInputVolume(Volume vol) { m_input_volume = vol; }
 
-    int dense_weights_count=0;
-    int dense_filter_length=0;
 
 protected:
+    Volume m_input_volume;
+    Volume m_output_volume;
+    Filter m_filter;
 
 
     virtual void MapLayer();
@@ -83,6 +84,8 @@ protected:
     long long *pointerB=nullptr;
     long long *pointerE=nullptr;
 
+    int dense_weights_count = 0;
+    int dense_filter_length = 0;
 
 };
 

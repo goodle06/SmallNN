@@ -4,9 +4,9 @@ namespace NN {
 
 
 PoolingLayer::PoolingLayer(int height, int width, int stride) {
-    m_window_height=height;
-    m_window_stride=stride;
-    m_window_width=width;
+    m_filter.height=height;
+    m_filter.stride=stride;
+    m_filter.width=width;
 
 }
 
@@ -18,9 +18,9 @@ PoolingLayer::PoolingLayer(std::initializer_list<int> params)
 void PoolingLayer::SetParams(std::initializer_list<int> params)
 {
     auto p = params.begin();
-    if (p != params.end()) m_window_height = *p;
-    if (p+1 != params.end()) m_window_width = *(++p);
-    if (p+1 != params.end()) m_window_stride = *(++p);
+    if (p != params.end()) m_filter.height = *p;
+    if (p+1 != params.end()) m_filter.width = *(++p);
+    if (p+1 != params.end()) m_filter.stride = *(++p);
 }
 
 bool PoolingLayer::SetConnections(DataBlob &blob) {
@@ -31,10 +31,8 @@ bool PoolingLayer::SetConnections(DataBlob &blob) {
 bool PoolingLayer::SetConnections(Layer *prev) {
 
     ConvolutionalLayer *child=dynamic_cast<ConvolutionalLayer*>(prev);
-    inVolumeHeight=child->outVolumeHeight;
-    inVolumeWidth=child->outVolumeWidth;
-    inVolumeDepth=child->m_filter_count;
-    this->m_filter_count=inVolumeDepth;
+    SetInputVolume(child->GetOutputVolume());
+    this->m_output_volume.depth=m_input_volume.depth;
     if (!CalcInternalParams()) return false;
     assignMemoryInternal();
     MapLayer();
@@ -42,20 +40,20 @@ bool PoolingLayer::SetConnections(Layer *prev) {
 }
 
 bool PoolingLayer:: CalcInternalParams() {
-    this->dense_filter_length=m_window_height*m_window_width;
-    this->dense_weights_count=dense_filter_length*m_filter_count;
+    this->dense_filter_length=m_filter.height*m_filter.width;
+    this->dense_weights_count=dense_filter_length*m_output_volume.depth;
 
     /* Filter stride check*/
-    if ((this->inVolumeHeight-m_window_height)%m_window_stride!=0
-            ||(this->inVolumeWidth-m_window_width)%m_window_stride!=0) {
+    if ((this->m_input_volume.height-m_filter.height)%m_filter.stride!=0
+            ||(this->m_input_volume.width-m_filter.width)%m_filter.stride!=0) {
         std::cout << "Window stride leads to necessity of input padding. This functionality isn't ready yet\n";
         return false;
     }
 
-    this->outVolumeHeight=(this->inVolumeHeight-m_window_height)/m_window_stride+1;
-    this->outVolumeWidth=(this->inVolumeWidth-m_window_width)/m_window_stride+1;
-    rows=this->outVolumeHeight*this->outVolumeWidth*m_filter_count;
-    cols=inVolumeDepth*inVolumeHeight*inVolumeWidth;
+    this->m_output_volume.height=(this->m_input_volume.height-m_filter.height)/m_filter.stride+1;
+    this->m_output_volume.width=(this->m_input_volume.width-m_filter.width)/m_filter.stride+1;
+    rows=this->m_output_volume.height*this->m_output_volume.width*m_output_volume.depth;
+    cols=m_input_volume.depth*m_input_volume.height*m_input_volume.width;
     total_count=rows*cols;
 
     return true;
@@ -65,16 +63,16 @@ bool PoolingLayer:: CalcInternalParams() {
 void PoolingLayer::MapLayer() {
     int sparse_index=0;
     int f_row, f_col;
-    for (int f=0;f<m_filter_count;f++) {
-        for (int y=0;y<outVolumeHeight;y++) {
-            for (int x=0;x<outVolumeWidth;x++) {
-                f_row=x+y*outVolumeWidth+f*outVolumeHeight*outVolumeWidth; //
-                pointerB[f_row]=f_row*m_window_height*m_window_width;
-                pointerE[f_row]=pointerB[f_row]+m_window_height*m_window_width;
-                for (int wy=0;wy<m_window_height;wy++) {
-                    for (int wx=0;wx<m_window_width;wx++) {
-                        f_col=f*inVolumeHeight*inVolumeWidth // input filter column shift
-                                + (y*m_window_stride+wy)*inVolumeWidth+(x*m_window_stride+wx); //window shift
+    for (int f=0;f<m_output_volume.depth;f++) {
+        for (int y=0;y<m_output_volume.height;y++) {
+            for (int x=0;x<m_output_volume.width;x++) {
+                f_row=x+y*m_output_volume.width+f*m_output_volume.height*m_output_volume.width; //
+                pointerB[f_row]=f_row*m_filter.height*m_filter.width;
+                pointerE[f_row]=pointerB[f_row]+m_filter.height*m_filter.width;
+                for (int wy=0;wy<m_filter.height;wy++) {
+                    for (int wx=0;wx<m_filter.width;wx++) {
+                        f_col=f*m_input_volume.height*m_input_volume.width // input filter column shift
+                                + (y*m_filter.stride+wy)*m_input_volume.width+(x*m_filter.stride+wx); //window shift
                         columns[sparse_index]=f_col;
                         sparse_index++;
                     }
@@ -140,7 +138,7 @@ void PoolingLayer::UpdateWeights(const int batchSize, const float learning_rate)
 
 void PoolingLayer::print(bool weights) const {
     LOG << "Layer type: pooling, ";
-    LOG << "Size: " << m_window_height << "x" << m_window_width << "x" << m_filter_count << ", " << "stride " << m_window_stride << "\n";
+    LOG << "Size: " << m_filter.height << "x" << m_filter.width << "x" << m_output_volume.depth << ", " << "stride " << m_filter.stride << "\n";
     if (weights) std::cout << "No weights available for pooling layers\n";
 }
 
@@ -151,13 +149,13 @@ void PoolingLayer::printGradient() const {
 void PoolingLayer::SaveStd(std::fstream &stream) {
 
     int ltype=static_cast<int>(this->Type());
-    int ww=m_window_width;
-    int wh=m_window_height;
-    int ws=m_window_stride;
-    int fc=m_filter_count;
-    int vh=inVolumeHeight;
-    int vw=inVolumeWidth;
-    int vd=inVolumeDepth;
+    int ww=m_filter.width;
+    int wh=m_filter.height;
+    int ws=m_filter.stride;
+    int fc=m_output_volume.depth;
+    int vh=m_input_volume.height;
+    int vw=m_input_volume.width;
+    int vd=m_input_volume.depth;
 
     std::vector<int> data_for_stream={ltype, ww,wh,ws,fc,vh,vw,vd};
     for (auto d : data_for_stream) UploadToStream(&d,stream,1);
@@ -170,14 +168,14 @@ void PoolingLayer::LoadStd(std::fstream &stream) {
     m_string_type=static_cast<LayerType>(DownloadIntFromStream(stream));
     for (auto &d : data_from_stream) d=DownloadIntFromStream(stream);
 
-    m_window_width=data_from_stream[0];
-    m_window_height=data_from_stream[1];
-    m_window_stride=data_from_stream[2];
-    m_filter_count=data_from_stream[3];
+    m_filter.width=data_from_stream[0];
+    m_filter.height=data_from_stream[1];
+    m_filter.stride=data_from_stream[2];
+    m_output_volume.depth=data_from_stream[3];
 
-    inVolumeHeight=data_from_stream[4];
-    inVolumeWidth=data_from_stream[5];
-    inVolumeDepth=data_from_stream[6];
+    m_input_volume.height=data_from_stream[4];
+    m_input_volume.width=data_from_stream[5];
+    m_input_volume.depth=data_from_stream[6];
 
     CalcInternalParams();
     assignMemoryInternal();
@@ -187,11 +185,11 @@ void PoolingLayer::LoadStd(std::fstream &stream) {
 
 void PoolingLayer::Test() {
 
-    this->inVolumeHeight=4;
-    this->inVolumeWidth=4;
-    this->inVolumeDepth=3;
-    int input_sz=this->inVolumeHeight*this->inVolumeWidth*this->inVolumeDepth;
-    this->m_filter_count=inVolumeDepth;
+    this->m_input_volume.height=4;
+    this->m_input_volume.width=4;
+    this->m_input_volume.depth=3;
+    int input_sz=this->m_input_volume.height*this->m_input_volume.width*this->m_input_volume.depth;
+    this->m_output_volume.depth=m_input_volume.depth;
     CalcInternalParams();
     assignMemoryInternal();
     MapLayer();
@@ -203,11 +201,11 @@ void PoolingLayer::Test() {
     for (int i=0;i<input_sz;i++) input_vec[i]=dist(e1);
 
     std::cout << "Input volume\n";
-    for (int d=0;d<this->inVolumeDepth;d++) {
+    for (int d=0;d<this->m_input_volume.depth;d++) {
         std::cout << "filter #" << d << ":\n";
-        for (int y=0;y<this->inVolumeHeight;y++) {
-            for (int x=0;x<this->inVolumeWidth;x++) {
-                std::cout << input_vec[d*this->inVolumeHeight*this->inVolumeWidth+y*this->inVolumeWidth+x] << " ";
+        for (int y=0;y<this->m_input_volume.height;y++) {
+            for (int x=0;x<this->m_input_volume.width;x++) {
+                std::cout << input_vec[d*this->m_input_volume.height*this->m_input_volume.width+y*this->m_input_volume.width+x] << " ";
             }
             std::cout << "\n";
         }
@@ -217,11 +215,11 @@ void PoolingLayer::Test() {
     float *map=this->RunWX(input_vec, dest);
 
     std::cout << "Output volume\n";
-    for (int d=0;d<this->m_filter_count;d++) {
+    for (int d=0;d<this->m_output_volume.depth;d++) {
         std::cout << "filter #" << d << ":\n";
-        for (int y=0;y<this->outVolumeHeight;y++) {
-            for (int x=0;x<this->outVolumeWidth;x++) {
-                std::cout << dest[d*this->outVolumeHeight*this->outVolumeWidth+y*this->outVolumeWidth+x] << " ";
+        for (int y=0;y<this->m_output_volume.height;y++) {
+            for (int x=0;x<this->m_output_volume.width;x++) {
+                std::cout << dest[d*this->m_output_volume.height*this->m_output_volume.width+y*this->m_output_volume.width+x] << " ";
             }
             std::cout << "\n";
         }
