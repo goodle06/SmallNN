@@ -132,10 +132,12 @@ private:
     int getNeuronsCount();
     int getWeightsCount();
     std::vector<Layer*> layers;
-    DesignPatterns::Factory<NN::Layer, std::string, NN::Layer* (*)()> layerFactory;
-    DesignPatterns::Factory<LossFunction, std::string, LossFunction* (*)()> lossFunctionFactory;
+    static DesignPatterns::Factory<NN::Layer, std::string, NN::Layer* (*)()> layerFactory;
+    static DesignPatterns::Factory<LossFunction, std::string, LossFunction* (*)()> lossFunctionFactory;
     Object* executioner = nullptr;
 };
+
+    
 
 }
 

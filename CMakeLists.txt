@@ -32,9 +32,44 @@ set(SOURCES
 	src/NeuralNetwork/NetTelemetry.cpp
 	src/NeuralNetwork/NeuralNetwork.cpp
 	src/NeuralNetwork/TrainingTelemetry.cpp
+	src/NeuralNetwork/Registry.cpp
+
+	include/Common.h
+	
+	include/DesignPatterns/Command.h
+	include/DesignPatterns/Factory.h
+
+	include/NeuralNetwork/Blobs/Datablob.h
+	include/NeuralNetwork/Blobs/DataTransformation.h
+	include/NeuralNetwork/Blobs/OriginalSample.h
+	include/NeuralNetwork/Blobs/TranslationUnit.h
+
+	include/NeuralNetwork/Layers/ConvolutionalLayer.h
+	include/NeuralNetwork/Layers/DeconvolutionalLayer.h
+	include/NeuralNetwork/Layers/Layer.h
+	include/NeuralNetwork/Layers/LayerFactory.h
+	include/NeuralNetwork/Layers/PoolingLayer.h
+
+	include/NeuralNetwork/ActivationFunction.h
+	include/NeuralNetwork/ActivationFunctionFactory.h
+	include/NeuralNetwork/CommandParser.h
+	include/NeuralNetwork/Estimate.h
+	include/NeuralNetwork/LossFunction.h
+	include/NeuralNetwork/LossFunctionFactory.h
+	include/NeuralNetwork/NetTelemetry.h
+	include/NeuralNetwork/NeuralNetwork.h
+	include/NeuralNetwork/Object.h
+	include/NeuralNetwork/TrainingTelemetry.h
+	include/NeuralNetwork/Registry.h
+
+	include/WrappersAndServices/FStreamInterface.h
+	include/WrappersAndServices/WindowsWrappers.h
+
 )
 
 option(USE_OPENCV "Using openCV" ON)
+
+
 
 add_executable(small_nn ${SOURCES})
 
@@ -43,4 +78,8 @@ target_include_directories(small_nn PRIVATE
 	${PROJECT_SOURCE_DIR}/include/3party/CvPlot/CvPlot/inc
 	${PROJECT_SOURCE_DIR}/include/3party
 )
+
+set(MKL_USE_STATIC_LIBS ON)
+find_package(MKL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE MKL::Libs)
 

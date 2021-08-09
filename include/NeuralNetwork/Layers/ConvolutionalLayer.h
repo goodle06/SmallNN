@@ -42,7 +42,7 @@ public:
 
     struct Volume {
         int height = 0; int width = 0; int depth = 0;
-        int Length() { return height * width * depth; }
+        int Length() { return height * width; }
     };
     struct Filter  {
         int height = 0; int width = 0; int stride = 0; int padding = 0;
@@ -67,7 +67,7 @@ protected:
     sparse_matrix_t A=nullptr;
     matrix_descr descrA = {};
 
-    float *values=nullptr;
+    float *nonzero_values=nullptr;
     float *values_source=nullptr;
 
     float *offset_vector_dense=nullptr;
@@ -80,12 +80,26 @@ protected:
 
     std::vector<float> weights_log;
 
-    long long *columns=nullptr;
-    long long *pointerB=nullptr;
-    long long *pointerE=nullptr;
+    int *columns=nullptr;
+    int *pointerB=nullptr;
+    int *pointerE=nullptr;
 
     int dense_weights_count = 0;
     int dense_filter_length = 0;
+
+    struct SparseMatrixData {
+
+        SparseMatrixData(size_t rows, size_t cols);
+        ~SparseMatrixData();
+
+        sparse_matrix_t A = nullptr;
+        matrix_descr descrA = {};
+        float* nonzero_values = nullptr;
+        int* columns = nullptr;
+        int* pointerB = nullptr;
+        int* pointerE = nullptr;
+
+    };
 
 };
 

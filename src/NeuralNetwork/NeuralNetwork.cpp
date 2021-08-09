@@ -3,6 +3,10 @@
 namespace NN {
 
 
+    DesignPatterns::Factory<NN::Layer, std::string, NN::Layer* (*)()> NeuralNetwork::layerFactory = {};
+    DesignPatterns::Factory<LossFunction, std::string, LossFunction* (*)()> NeuralNetwork::lossFunctionFactory = {};
+
+
 void NeuralNetwork::RegisterLossFunctions() {
     lossFunctionFactory.Register("softmax", &SpawnLossFunction<SoftmaxLoss>);
     lossFunctionFactory.Register("binary", &SpawnLossFunction<MultiLabelCrossEntropyLoss>);

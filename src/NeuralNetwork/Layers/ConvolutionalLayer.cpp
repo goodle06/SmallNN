@@ -34,7 +34,7 @@ ConvolutionalLayer::~ConvolutionalLayer() {
 
     mkl_sparse_destroy(A);
 
-    if (values) mkl_free(values) ;
+    if (nonzero_values) mkl_free(nonzero_values) ;
     if (columns) mkl_free(columns) ;
     if (pointerB) mkl_free(pointerB) ;
     if (pointerE) mkl_free(pointerE) ;
@@ -49,9 +49,7 @@ ConvolutionalLayer::~ConvolutionalLayer() {
 bool ConvolutionalLayer::SetConnections(Layer *prev) {
 
     ConvolutionalLayer *child=dynamic_cast<ConvolutionalLayer*>(prev);
-    m_input_volume.height=child->m_output_volume.height;
-    m_input_volume.width=child->m_output_volume.width;
-    m_input_volume.depth=child->m_output_volume.depth;
+    SetInputVolume(child->GetOutputVolume());
     if (!CalcInternalParams()) return false;
     assignMemory();
     return true;
@@ -81,12 +79,12 @@ void ConvolutionalLayer::assignMemory(float *src) {
 void ConvolutionalLayer::assignMemoryInternal() {
     offset_vector_dense=values_source+m_input_volume.depth*m_filter.height*m_filter.width*m_output_volume.depth;
 
-    values=(float*)mkl_calloc(dense_filter_length*rows+rows, sizeof(float),64);
-    offset_vector=values+dense_filter_length*rows;
+    nonzero_values=(float*)mkl_calloc(dense_filter_length*rows+rows, sizeof(float),64);
+    offset_vector=nonzero_values+dense_filter_length*rows;
 
-    columns=(long long*)mkl_malloc(sizeof(long long)*dense_filter_length*rows,64);
-    pointerB=(long long*)mkl_malloc(sizeof(long long)*rows,64);
-    pointerE=(long long*)mkl_malloc(sizeof(long long)*rows,64);
+    columns=(int*)mkl_malloc(sizeof(int)*dense_filter_length*rows,64);
+    pointerB=(int*)mkl_malloc(sizeof(int)*rows,64);
+    pointerE=(int*)mkl_malloc(sizeof(int)*rows,64);
 
     gradient_values_source=(float*)mkl_calloc(dense_filter_length*m_output_volume.depth+m_output_volume.depth,sizeof(float),64);
     offset_gradient_source=gradient_values_source+dense_filter_length*m_output_volume.depth;
@@ -144,15 +142,17 @@ void ConvolutionalLayer::MapLayer() {
     for (int f=0;f<m_output_volume.depth;f++) {
         for (int y=0;y<m_output_volume.height;y++) {
             for (int x=0;x<m_output_volume.width;x++) {
-                f_row=x+y*m_output_volume.width+f*m_output_volume.height*m_output_volume.width; /*one filter gives ((input_width-filter_width)/stride+1)x((input_height-filter_height)/stride+1)
-                                                                              or m_output_volume.width*m_output_volume.height
-                                                                              rows to the sparse matrix*/
-                pointerB[f_row]=f_row*m_filter.height*m_filter.width*m_input_volume.depth; /* begining of row is rows index multiplied by the number of non-zero values in one row which equals filter length X*/
-                pointerE[f_row]=pointerB[f_row]+m_filter.height*m_filter.width*m_input_volume.depth;
+                /*one filter gives ((input_width-filter_width)/stride+1)x((input_height-filter_height)/stride+1)
+                  or m_output_volume.width*m_output_volume.height rows to the sparse matrix*/
+                f_row=x+y*m_output_volume.width+f*m_output_volume.Length(); 
+
+                /* begining of row is rows index (f_row) multiplied by the number of non-zero values in one row which equals filter length X*/
+                pointerB[f_row]=f_row*m_filter.Length()*m_input_volume.depth; 
+                pointerE[f_row]=pointerB[f_row]+ m_filter.Length()*m_input_volume.depth;
                 for (int d=0;d<m_input_volume.depth;d++) {
                     for (int wy=0;wy<m_filter.height;wy++) {
                         for (int wx=0;wx<m_filter.width;wx++) {
-                            f_col=d*m_input_volume.height*m_input_volume.width // input filter column shift
+                            f_col=d*m_input_volume.Length() // input filter column shift
                                     + (y*m_filter.stride+wy)*m_input_volume.width+(x*m_filter.stride+wx); //window shift
                             columns[sparse_index]=f_col;
                             pointers_to_gradient_values[sparse_index]=getMatrixPointer(CblasColMajor,f_row,f_col,rows,cols,layer_gradient);
@@ -165,13 +165,13 @@ void ConvolutionalLayer::MapLayer() {
     }
 
     descrA.type=SPARSE_MATRIX_TYPE_GENERAL;
-    auto stat=mkl_sparse_s_create_csr(&A, SPARSE_INDEX_BASE_ZERO,rows,cols,&pointerB[0], &pointerE[0],&columns[0],&values[0]);
+    auto stat=mkl_sparse_s_create_csr(&A, SPARSE_INDEX_BASE_ZERO,rows,cols,&pointerB[0], &pointerE[0],&columns[0],&nonzero_values[0]);
 }
 
 void ConvolutionalLayer::CopyValues(float *src) {
     for (int f=0;f<m_output_volume.depth;f++) {
         for (int shift=0;shift<m_output_volume.height*m_output_volume.width;shift++) {
-            std::memcpy(&values[f*dense_filter_length*m_output_volume.height*m_output_volume.width+shift*dense_filter_length],&src[f*dense_filter_length],dense_filter_length*sizeof (float));
+            std::memcpy(&nonzero_values[f*dense_filter_length*m_output_volume.height*m_output_volume.width+shift*dense_filter_length],&src[f*dense_filter_length],dense_filter_length*sizeof (float));
         }
     }
     int dummy1=m_output_volume.height*m_output_volume.width;
@@ -294,12 +294,12 @@ void ConvolutionalLayer::printGradient() const {
 void ConvolutionalLayer::CreateBackup() {
     int val_count=m_input_volume.depth*m_filter.height*m_filter.width*rows;
     if (!echo_values) echo_values=(float*)mkl_malloc(val_count*sizeof (float),64);
-    std::memcpy(echo_values,values,val_count*sizeof(float));
+    std::memcpy(echo_values,nonzero_values,val_count*sizeof(float));
 }
 
 void ConvolutionalLayer::Rollback() {
     int val_count=m_input_volume.depth*m_filter.height*m_filter.width*rows;
-    std::memcpy(values,echo_values,val_count*sizeof(float));
+    std::memcpy(nonzero_values,echo_values,val_count*sizeof(float));
 }
 
 
@@ -362,6 +362,25 @@ std::vector<float> ConvolutionalLayer::getlog(int weight_no) {
     return log;
 }
 
+
+ConvolutionalLayer::SparseMatrixData::SparseMatrixData(size_t rows, size_t cols) {
+
+    nonzero_values = (float*)mkl_calloc(cols * rows, sizeof(float), 64);
+    columns = (int*)mkl_malloc(sizeof(int) * cols * rows, 64);
+    pointerB = (int*)mkl_malloc(sizeof(int) * rows, 64);
+    pointerE = (int*)mkl_malloc(sizeof(int) * rows, 64);
+
+    descrA.type = SPARSE_MATRIX_TYPE_GENERAL;
+    auto stat = mkl_sparse_s_create_csr(&A, SPARSE_INDEX_BASE_ZERO, rows, cols, &pointerB[0], &pointerE[0], &columns[0], &nonzero_values[0]);
+}
+
+ConvolutionalLayer::SparseMatrixData::~SparseMatrixData() {
+    mkl_sparse_destroy(A);
+    mkl_free(nonzero_values);
+    mkl_free(columns);
+    mkl_free(pointerB);
+    mkl_free(pointerE);
+}
 
 
 }
