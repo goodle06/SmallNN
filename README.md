@@ -35,7 +35,6 @@ External dependencies:
 Installation guide:
 1. Clone repository;
 2. Run CMake
-3. Link to Intel MKL (project properties -> intel perfomance libraries -> Use Intel MKL (sequential), Use ILP64 interfaces (yes))
-4. Ready to go.
+3. Ready to go.
 
 You can download datasets and translation units with this link (https://github.com/goodle06/NNDataset), put appropriate paths to default.netcf file and run command "load_config" and train your own net. Configuration file syntax described in NetConfigTemplate, so you can configure net with this tool or with standard input (std::cin).
