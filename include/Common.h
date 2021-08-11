@@ -26,6 +26,7 @@
 #include <sstream>
 #include <fstream>
 #include <stdexcept>
+#include <bitset>
 
 #include <future>
 #include <mutex>

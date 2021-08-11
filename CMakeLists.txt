@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 project(small_nn)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/cmake")
+
 set(SOURCES
 	SmallNN.cpp
 
@@ -33,6 +35,8 @@ set(SOURCES
 	src/NeuralNetwork/NeuralNetwork.cpp
 	src/NeuralNetwork/TrainingTelemetry.cpp
 	src/NeuralNetwork/Registry.cpp
+	src/NeuralNetwork/NetState.cpp
+
 
 	include/Common.h
 	
@@ -61,6 +65,7 @@ set(SOURCES
 	include/NeuralNetwork/Object.h
 	include/NeuralNetwork/TrainingTelemetry.h
 	include/NeuralNetwork/Registry.h
+	include/NeuralNetwork/NetState.h
 
 	include/WrappersAndServices/FStreamInterface.h
 	include/WrappersAndServices/WindowsWrappers.h

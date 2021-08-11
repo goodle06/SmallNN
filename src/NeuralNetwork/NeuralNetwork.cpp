@@ -1,4 +1,5 @@
 #include <NeuralNetwork/NeuralNetwork.h>
+#include <NeuralNetwork/NetState.h>
 
 namespace NN {
 
@@ -24,6 +25,7 @@ void NeuralNetwork::RegisterLayers() {
 }
 
 NeuralNetwork::NeuralNetwork() {
+    this->ChangeState(new Uninitialized);
     this->RegisterComponents();
 }
 
@@ -38,16 +40,6 @@ void NeuralNetwork::addLayer(Layer *layer) {
     status.tel.at("layers")=true;
     status.tel.at("connections")=false;
     status.tel.at("weights")=false;
-}
-
-void NeuralNetwork::train(TrainingOptions new_options) {
-    options=new_options;
-    this->train();
-}
-
-void NeuralNetwork::train(const int epochs, const int batchSize, const float learning_rate) {
-    options=TrainingOptions({epochs,batchSize,learning_rate});
-    this->train();
 }
 
 void NeuralNetwork::train() {
@@ -328,12 +320,6 @@ void NeuralNetwork::SetLossFunction(LossFunctionType type) {
     }
 }
 
-void NeuralNetwork::SetLossFunction(std::string type) {
-    if (type.find("quadratic")!=std::string::npos) SetLossFunction(LossFunctionType::Quadratic);
-    else if(type.find("softmax")!=std::string::npos) SetLossFunction(LossFunctionType::Softmax);
-    else if(type.find("multiLabelCrossEntropy")!=std::string::npos) SetLossFunction(LossFunctionType::BinaryCrossEntropy);
-    else LOG << "ERROR: unknown loss function\n";
-}
 
 NeuralNetwork::~NeuralNetwork() {
     for (int i = 0; i < layers.size(); i++) delete layers[i];
@@ -690,5 +676,18 @@ void NeuralNetwork::ExecuteCommand(NetCommand &cmd) {
     }
 
 }
+
+
+void NeuralNetwork::SetTrainingOptions(const int epochs, const int batchSize, const float learing_rate) {
+    options.epoches = epochs;
+    options.batchSize = batchSize;
+    options.learningRate = learing_rate;
+}
+
+void NeuralNetwork::ChangeState(NetState* state) {
+    delete m_state;
+    m_state = state;
+}
+    
 
 }

@@ -12,9 +12,9 @@
 #include <NeuralNetwork/TrainingTelemetry.h>
 
 
+
 namespace NN {
 
-enum class NetType{vanilla, convolutional};
 
 class NeuralNetwork : public Object {
 public:
@@ -32,11 +32,9 @@ public:
         bool isSet();
     };
 
-
     /*Trains net*/
-    void train(TrainingOptions options);
+    void SetTrainingOptions(const int epochs, const int batchSize, const float learing_rate);
     void train();
-    void train(const int epochs, const int batchSize, const float learing_rate);
 
     /*reverse last training weights update*/
     void RollBack();
@@ -67,8 +65,6 @@ public:
     
     /*Sets loss function to the net*/
     void SetLossFunction(LossFunction* function);
-    void SetLossFunction(LossFunctionType type);
-    void SetLossFunction(std::string type);
 
     /*Provides file dialog to chose net from file, Windows only*/
     void LoadNetFromFile();
@@ -91,31 +87,37 @@ public:
     void printTrainingParameters() const;
     void printInputParameters() const;
 
-    NN::DataBlob* trainBlob=nullptr;
-    NN::DataBlob* testBlob=nullptr;
-
     /*select for running net and displaying blob info of that dataset: "train" or "test"*/
     void SelectDataset(std::string which_one);
 private:
+    friend class NetState;
+
     void CreateBackup();
     void RunMKL(const int no);
     void UpdateWeights(const int batchSize);
     void RunForward(float *X, float *WX,    std::vector<float*> &poolingMaps, float* Derivative=nullptr);
     void RunForward(float *X, float *WX);
+    void SetLossFunction(LossFunctionType type);
+    void ChangeState(NetState* state);
 
     //calls LayerFactoryRegister to register layer available layer types in LayerFactory
     /*Probably better to make registers static*/
     void RegisterLayers(); 
     void RegisterLossFunctions();
     void RegisterComponents();
-
+    int getNeuronsCount();
+    int getWeightsCount();
     /*getter*/
     DataBlob* GetCurrentDataset();
-    NN::DataBlob* currentDataset=nullptr;
-    
-    NN::Layer* currentLayer=nullptr;
+private:
+    NetState* m_state=nullptr;
 
+    NN::DataBlob* currentDataset=nullptr;
+    NN::Layer* currentLayer = nullptr;
+    NN::DataBlob* trainBlob = nullptr;
+    NN::DataBlob* testBlob = nullptr;
     NN::LossFunction* lossFunc=nullptr;
+
     int weights_total=0;
     int neurons_total=0;
     int net_rows=0;
@@ -129,8 +131,7 @@ private:
     TrainingTelemetry training_telemetry;
     std::chrono::duration<double> training_duration=std::chrono::seconds(0);
     TrainingOptions options;
-    int getNeuronsCount();
-    int getWeightsCount();
+
     std::vector<Layer*> layers;
     static DesignPatterns::Factory<NN::Layer, std::string, NN::Layer* (*)()> layerFactory;
     static DesignPatterns::Factory<LossFunction, std::string, LossFunction* (*)()> lossFunctionFactory;
