@@ -4,12 +4,11 @@
 
 #include <Common.h>
 #include <NeuralNetwork/NeuralNetwork.h>
-
+#include <NeuralNetwork/NetState.h>
 
 
 int main()
 {
-
     std::string command = "";
     NN::NeuralNetwork net;
 
@@ -17,7 +16,6 @@ int main()
         std::getline(std::cin, command);
         net.RunCommand(command);
     }
-
     std::cout << "Exited\n";
 }
 
