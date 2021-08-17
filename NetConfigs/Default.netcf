@@ -17,7 +17,7 @@ resize 22 1
 transform sin
 
 reset
-load_test_data K:\\Blobs\\BlobTrain.blob K:\\TranslationUnits\\CharTranslation.trun
+load_test_data K:\\Blobs\\BlobTest.blob K:\\TranslationUnits\\CharTranslation.trun
 resize 22 1
 transform sin
 

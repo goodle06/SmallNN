@@ -15,30 +15,37 @@
 namespace NN {
 
 	class NetState {
+		std::string m_name;
 	public:
 		NetState() = default;
+		NetState(std::string name) : m_name(name) {};
 		virtual ~NetState() = default;
 
-		virtual void Train(NeuralNetwork* net) {};
-		virtual void SetTrainingOptions(NeuralNetwork* net, const int epochs, const int batchSize, const float learing_rate) {};
-		virtual void Connect(NeuralNetwork* net) {};
-		virtual void AddTrainData(NeuralNetwork* net, DataBlob* blob) {};
-		virtual void AddTestData(NeuralNetwork* net, DataBlob* blob) {};
-		virtual void SeedWeights(NeuralNetwork* net, const float lower_bound = 0.0f, const float upper_bound = 0.01f) {};
-		virtual void SetLossFunction(NeuralNetwork* net, LossFunction* function) {};
-		virtual void Run(NeuralNetwork* net) {};
-		virtual void AddLayer(NeuralNetwork* net, Layer* layer) {};
+		virtual void Train(NeuralNetwork* net) { default_behavior(); }
+		virtual void SetTrainingOptions(NeuralNetwork* net, const int epochs, const int batchSize, const float learing_rate) { default_behavior(); };
+		virtual void Connect(NeuralNetwork* net) { default_behavior(); };
+		virtual void AddTrainData(NeuralNetwork* net, DataBlob* blob) { default_behavior(); };
+		virtual void AddTestData(NeuralNetwork* net, DataBlob* blob) { default_behavior(); };
+		virtual void SeedWeights(NeuralNetwork* net, const float lower_bound, const float upper_bound) { default_behavior(); };
+		virtual void SetLossFunction(NeuralNetwork* net, LossFunction* function) { default_behavior(); };
+		virtual void Run(NeuralNetwork* net) { default_behavior(); };
+		virtual void AddLayer(NeuralNetwork* net, Layer* layer) { default_behavior(); };
 
+		virtual std::string GetName() const { return m_name; }
 	protected:
 		virtual void ChangeState(NeuralNetwork* net, NetState* state) {
 			net->ChangeState(state);
+			std::cout << "New state: " << state->GetName() << "\n";
 		}
+	private:
+		void default_behavior() { std::cout << "ERROR: Incorrect state, current state: " << GetName() << "\n"; }
 	};
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
 	class Trained : public NetState {
 	public:
+		Trained() : NetState("trained") {}
 		virtual void Run(NeuralNetwork* net) override {
 			net->RunOnce();
 		}
@@ -50,26 +57,39 @@ namespace NN {
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
 	class ReadyToTrain : public NetState {
 	public:
+		ReadyToTrain() : NetState("ready to train") {}
 		virtual void Train(NeuralNetwork* net) override {
 			net->train();
-			ChangeState(net, new Trained);
+			NetState::ChangeState(net, new Trained);
 		}
 	};
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
+	class Connected : public NetState {
+	public:
+		Connected() : NetState("connected") {}
+		virtual void SetTrainingOptions(NeuralNetwork* net, const int epochs, const int batchSize, const float learing_rate) {
+			net->SetTrainingOptions(epochs, batchSize, learing_rate);
+			NetState::ChangeState(net, new ReadyToTrain);
+		}
+	};
+/*-----------------------------------------------------------------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------------------------------------------------------------------*/
 	class ReadyToSeedWeights : public NetState {
 	public:
-		virtual void SeedWeights(NeuralNetwork* net, const float lower_bound = 0.0f, const float upper_bound = 0.01f) override {
+		ReadyToSeedWeights() : NetState("ready to seed weights") {}
+		virtual void SeedWeights(NeuralNetwork* net, const float lower_bound, const float upper_bound) override {
 			net->connect();
 			net->SeedWeights(lower_bound, upper_bound);
-			ChangeState(net, new ReadyToTrain);
+			NetState::ChangeState(net, new Connected);
 		}
 	};
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------------------------------------------------------------------------*/
 	class Uninitialized : public NetState {
 	public:
+		Uninitialized() : NetState("uninitialized") {}
 		virtual void AddLayer(NeuralNetwork* net, Layer* layer) override {
 			net->addLayer(layer);
 			m_bitmask |= LAYER;
@@ -93,7 +113,8 @@ namespace NN {
 	private:
 		long m_bitmask = 0;
 		bool CheckBitMask() {
-			return std::bitset<sizeof(long)>(m_bitmask).all();
+			auto mask = std::bitset<4>(m_bitmask);
+			return std::bitset<4>(m_bitmask).all();
 		}
 		void ChangeState(NeuralNetwork* net, NetState* state) override {
 			if (CheckBitMask())

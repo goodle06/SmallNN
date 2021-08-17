@@ -40,6 +40,8 @@ void NeuralNetwork::addLayer(Layer *layer) {
     status.tel.at("layers")=true;
     status.tel.at("connections")=false;
     status.tel.at("weights")=false;
+    layer->print();
+
 }
 
 void NeuralNetwork::train() {
@@ -589,7 +591,6 @@ void NeuralNetwork::ExecuteCommand(NetCommand &cmd) {
         cmd.SetCommand("set_parameters");
         layer->ExecuteCommand(cmd);
         addLayer(layer);
-        layer->print();
         executioner = layer;
     }
     if (cmd.GetCommand() == "set_loss") {
@@ -674,7 +675,6 @@ void NeuralNetwork::ExecuteCommand(NetCommand &cmd) {
     if (cmd.GetCommand() == "connect") {
         connect();
     }
-
 }
 
 

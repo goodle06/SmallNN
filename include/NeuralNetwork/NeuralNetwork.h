@@ -15,6 +15,7 @@
 
 namespace NN {
 
+    class NetState;
 
 class NeuralNetwork : public Object {
 public:
@@ -89,6 +90,8 @@ public:
 
     /*select for running net and displaying blob info of that dataset: "train" or "test"*/
     void SelectDataset(std::string which_one);
+
+    NetState* GetState() { return m_state; }
 private:
     friend class NetState;
 
